@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { FaceMesh } from "@mediapipe/face_mesh";
 import * as cam from "@mediapipe/camera_utils";
 
-const BlinkDetector: React.FC = () => {
+const DrowsinessDetector: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrowsy, setIsDrowsy] = useState(false);
@@ -19,6 +19,11 @@ const BlinkDetector: React.FC = () => {
       minDetectionConfidence: 0.7,
       minTrackingConfidence: 0.7,
     });
+
+    const EAR_THRESHOLD = 0.2; // EAR 값이 이 이하일 경우 -> 졸음으로 판단
+    const EAR_CONSEC_FRAMES = 15; // EAR 값이 낮은 상태로 유지되어야 하는 프레임 수
+
+    let blinkCounter = 0;
 
     faceMesh.onResults((results) => {
       if (results.multiFaceLandmarks && results.multiFaceLandmarks[0]) {
@@ -116,13 +121,18 @@ const BlinkDetector: React.FC = () => {
         const rightEAR = calculateEAR(rightEye);
         const averageEAR = (leftEAR + rightEAR) / 2.0;
 
-        console.log("EAR:", averageEAR);
+        // console.log("EAR:", averageEAR);
 
         // 졸음 감지 로직
-        const EAR_THRESHOLD = 0.2; // EAR 값이 이 이하일 경우 -> 졸음으로 판단
         if (averageEAR < EAR_THRESHOLD) {
-          setIsDrowsy(true);
+          blinkCounter += 1;
+          console.log("blinkCounter:", blinkCounter);
+          if (blinkCounter >= EAR_CONSEC_FRAMES) {
+            setIsDrowsy(true);
+          }
         } else {
+          blinkCounter = 0;
+          console.log("blinkCounter reset:", blinkCounter);
           setIsDrowsy(false);
         }
       }
@@ -161,4 +171,4 @@ const BlinkDetector: React.FC = () => {
   );
 };
 
-export default BlinkDetector;
+export default DrowsinessDetector;
