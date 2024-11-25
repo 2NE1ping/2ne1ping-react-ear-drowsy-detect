@@ -25,9 +25,11 @@ const DrowsinessDetector: React.FC = () => {
     const EAR_CONSEC_FRAMES = 15;
     const MAR_THRESHOLD = 0.5;
     const YAWN_CONSEC_FRAMES = 15;
+    const DROWSINESS_ALERT_INTERVAL = 3000;
 
     let blinkCounter = 0;
     let yawnCounter = 0;
+    let lastAlertTime = 0;
 
     const calculateMouthAspectRatio = (landmarks: any) => {
       const topLip = landmarks[13];
@@ -169,28 +171,39 @@ const DrowsinessDetector: React.FC = () => {
         // console.log("EAR:", averageEAR);
 
         // 졸음 감지 로직
+        const currentTime = Date.now();
+        let isDrowsy = false;
+
         if (averageEAR < EAR_THRESHOLD) {
           blinkCounter += 1;
-          // console.log("blinkCounter:", blinkCounter);
-          if (blinkCounter >= EAR_CONSEC_FRAMES) {
-            setIsDrowsyByEAR(true);
-          }
         } else {
           blinkCounter = 0;
-          // console.log("blinkCounter reset:", blinkCounter);
-          setIsDrowsyByEAR(false);
         }
 
         // MAR 계산 및 하품 감지 로직
         const mar = calculateMouthAspectRatio(landmarks);
         if (mar > MAR_THRESHOLD) {
           yawnCounter += 1;
-          if (yawnCounter >= YAWN_CONSEC_FRAMES) {
-            setIsYawning(true);
-          }
         } else {
           yawnCounter = 0;
-          setIsYawning(false);
+        }
+
+        if (
+          blinkCounter >= EAR_CONSEC_FRAMES ||
+          yawnCounter >= YAWN_CONSEC_FRAMES
+        ) {
+          isDrowsy = true;
+        }
+
+        if (
+          isDrowsy &&
+          currentTime - lastAlertTime > DROWSINESS_ALERT_INTERVAL
+        ) {
+          setIsDrowsyByEAR(true);
+          alert("졸음이 감지되었습니다! 잠시 휴식을 취하세요.");
+          lastAlertTime = currentTime;
+        } else {
+          setIsDrowsyByEAR(false);
         }
       }
     });
