@@ -5,7 +5,8 @@ import * as cam from "@mediapipe/camera_utils";
 const DrowsinessDetector: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isDrowsy, setIsDrowsy] = useState(false);
+  const [isDrowsyByEAR, setIsDrowsyByEAR] = useState(false);
+  const [isYawning, setIsYawning] = useState(false);
 
   useEffect(() => {
     const faceMesh = new FaceMesh({
@@ -20,16 +21,36 @@ const DrowsinessDetector: React.FC = () => {
       minTrackingConfidence: 0.7,
     });
 
-    const EAR_THRESHOLD = 0.2; // EAR 값이 이 이하일 경우 -> 졸음으로 판단
-    const EAR_CONSEC_FRAMES = 15; // EAR 값이 낮은 상태로 유지되어야 하는 프레임 수
+    const EAR_THRESHOLD = 0.2;
+    const EAR_CONSEC_FRAMES = 15;
+    const MAR_THRESHOLD = 0.5;
+    const YAWN_CONSEC_FRAMES = 15;
 
     let blinkCounter = 0;
+    let yawnCounter = 0;
+
+    const calculateMouthAspectRatio = (landmarks: any) => {
+      const topLip = landmarks[13];
+      const bottomLip = landmarks[14];
+      const leftLip = landmarks[78];
+      const rightLip = landmarks[308];
+
+      const verticalDistance = Math.sqrt(
+        Math.pow(topLip.x - bottomLip.x, 2) +
+          Math.pow(topLip.y - bottomLip.y, 2)
+      );
+      const horizontalDistance = Math.sqrt(
+        Math.pow(leftLip.x - rightLip.x, 2) +
+          Math.pow(leftLip.y - rightLip.y, 2)
+      );
+
+      return verticalDistance / horizontalDistance; // MAR 계산 공식
+    };
 
     faceMesh.onResults((results) => {
       if (results.multiFaceLandmarks && results.multiFaceLandmarks[0]) {
         const landmarks = results.multiFaceLandmarks[0];
 
-        // 캔버스에 눈 랜드마크 그리기
         if (canvasRef.current) {
           const canvasCtx = canvasRef.current.getContext("2d");
           if (canvasCtx) {
@@ -47,6 +68,7 @@ const DrowsinessDetector: React.FC = () => {
               canvasRef.current.height
             );
 
+            // 눈 랜드마크 그리기
             canvasCtx.fillStyle = "blue";
             const drawLandmarks = (eyeLandmarks: any) => {
               eyeLandmarks.forEach((landmark: any) => {
@@ -62,41 +84,64 @@ const DrowsinessDetector: React.FC = () => {
               });
             };
 
-            drawLandmarks([
+            const leftEye = [
               landmarks[33],
               landmarks[160],
               landmarks[158],
               landmarks[133],
               landmarks[153],
               landmarks[144],
-            ]);
-            drawLandmarks([
+            ];
+            const rightEye = [
               landmarks[362],
               landmarks[385],
               landmarks[387],
               landmarks[263],
               landmarks[373],
               landmarks[380],
-            ]);
+            ];
+
+            drawLandmarks(leftEye);
+            drawLandmarks(rightEye);
+
+            // 입술 랜드마크 그리기
+            canvasCtx.fillStyle = "orange";
+            const mouthLandmarks = [
+              landmarks[13],
+              landmarks[14],
+              landmarks[78],
+              landmarks[308],
+            ];
+            mouthLandmarks.forEach((landmark: any) => {
+              canvasCtx.beginPath();
+              canvasCtx.arc(
+                landmark.x * canvasRef.current!.width,
+                landmark.y * canvasRef.current!.height,
+                2,
+                0,
+                2 * Math.PI
+              );
+              canvasCtx.fill();
+            });
           }
         }
 
         // 눈 좌표 추출
         const leftEye = [
-          landmarks[33], // 외측
-          landmarks[160], // 상측
-          landmarks[158], // 하측
-          landmarks[133], // 내측
-          landmarks[153], // 상측
+          landmarks[33],
+          landmarks[160],
+          landmarks[158],
+          landmarks[133],
+          landmarks[153],
           landmarks[144],
         ];
         const rightEye = [
-          landmarks[362], // 외측
-          landmarks[385], // 상측
-          landmarks[387], // 하측
-          landmarks[263], // 내측
-          landmarks[373], // 상측
-          landmarks[380], // 하측
+          landmarks[362],
+          landmarks[385],
+          landmarks[387],
+          landmarks[263],
+          landmarks[373],
+          landmarks[380],
         ];
 
         // EAR 계산 함수
@@ -126,14 +171,26 @@ const DrowsinessDetector: React.FC = () => {
         // 졸음 감지 로직
         if (averageEAR < EAR_THRESHOLD) {
           blinkCounter += 1;
-          console.log("blinkCounter:", blinkCounter);
+          // console.log("blinkCounter:", blinkCounter);
           if (blinkCounter >= EAR_CONSEC_FRAMES) {
-            setIsDrowsy(true);
+            setIsDrowsyByEAR(true);
           }
         } else {
           blinkCounter = 0;
-          console.log("blinkCounter reset:", blinkCounter);
-          setIsDrowsy(false);
+          // console.log("blinkCounter reset:", blinkCounter);
+          setIsDrowsyByEAR(false);
+        }
+
+        // MAR 계산 및 하품 감지 로직
+        const mar = calculateMouthAspectRatio(landmarks);
+        if (mar > MAR_THRESHOLD) {
+          yawnCounter += 1;
+          if (yawnCounter >= YAWN_CONSEC_FRAMES) {
+            setIsYawning(true);
+          }
+        } else {
+          yawnCounter = 0;
+          setIsYawning(false);
         }
       }
     });
@@ -154,17 +211,30 @@ const DrowsinessDetector: React.FC = () => {
     <>
       <video ref={videoRef} autoPlay style={{ display: "none" }} />
       <canvas ref={canvasRef} width={640} height={480} />
-      {isDrowsy && (
+      {isDrowsyByEAR && (
         <div
           style={{
-            color: "red",
+            color: "blue",
             fontSize: "24px",
             position: "absolute",
             top: "10px",
-            left: "10px",
+            right: "10px",
           }}
         >
-          졸음 감지!
+          졸음 감지! (EAR)
+        </div>
+      )}
+      {isYawning && (
+        <div
+          style={{
+            color: "orange",
+            fontSize: "24px",
+            position: "absolute",
+            top: "50px",
+            right: "10px",
+          }}
+        >
+          하품 감지! (MAR)
         </div>
       )}
     </>
