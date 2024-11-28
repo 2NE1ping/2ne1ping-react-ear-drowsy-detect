@@ -1,0 +1,48 @@
+.container {
+  background-color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.logo {
+  width: 150px;
+  margin-bottom: 20px;
+}
+
+.title {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 30px;
+}
+
+.button {
+  padding: 12px 25px;
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  background-color: #fd8787;
+  font-weight: 700;
+  color: white;
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.button:hover {
+  background-color: #ff4c4c;
+  color: white;
+}
+
+.link {
+  text-decoration: none;
+}
+
+.explain {
+  text-align: center;
+  font-size: 15px;
+  color: #555;
+  margin-bottom: 40px;
+}
