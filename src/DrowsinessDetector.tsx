@@ -185,7 +185,7 @@ const DrowsinessDetector: React.FC = () => {
     const EAR_THRESHOLD = 0.2;
     const EAR_CONSEC_FRAMES = 15;
     const MAR_THRESHOLD = 0.5;
-    const YAWN_CONSEC_FRAMES = 60;
+    const YAWN_CONSEC_FRAMES = 15;
     const DROWSINESS_ALERT_INTERVAL = 10 * 1000;
     const PERCLOS_WINDOW = 4 * 1000;
     const PERCLOS_THRESHOLD = 0.7;
