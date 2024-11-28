@@ -1,46 +1,17 @@
-# Getting Started with Create React App
-
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
-
-## Available Scripts
-
-In the project directory, you can run:
-
-### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+![메인](https://github.com/user-attachments/assets/a232098b-90a0-4f74-869e-ebb1717ef7a5)
+![목차](https://github.com/user-attachments/assets/3704af60-e66a-42ce-9a01-89c207d3eee0)
+![01 팀원 소개 및 역할 분담](https://github.com/user-attachments/assets/cd650791-f1d3-4543-a0d1-1376aea47f26)
+![02 동기 및 필요성 - 1](https://github.com/user-attachments/assets/878d96ff-2cad-4ec6-991a-e737d13fd277)
+![02 동기 및 필요성 - 2](https://github.com/user-attachments/assets/a8370c22-1136-4351-9568-07027034427b)
+![03 프로젝트 의의](https://github.com/user-attachments/assets/65a8071b-7b4b-4bd0-bab1-9e7f63bf07e3)
+![04 구현 방법](https://github.com/user-attachments/assets/0862614f-ee7f-42a7-a7e2-459294352f76)
+![04 구현 방법 - 데이터 시각화](https://github.com/user-attachments/assets/6a7d1f0b-af01-4953-a211-abc7f8720a41)
+![04 구현 방법 - 데이터 수집 방법](https://github.com/user-attachments/assets/d0142fb2-fd5a-414d-8cf7-d96b6dcdf6df)
+![04 눈 깜빡임 인식-1](https://github.com/user-attachments/assets/44f56ae9-cac8-41bb-8bbb-f8fa38afb329)
+![04 구현 방법 - 데이터 전처리](https://github.com/user-attachments/assets/7acefbd2-337a-4ce9-8e21-9bf8aaaeeaab)
+![04 눈 깜빡임 인식-EAR](https://github.com/user-attachments/assets/ae451f56-91b2-4acf-ae01-796e44a1d75b)
+![04 눈 깜빡임 인식](https://github.com/user-attachments/assets/3cb9aae4-f759-4cbd-ae3a-1dfac67a5e08)
+![05 프로토타입 및 구현 목표](https://github.com/user-attachments/assets/cdd86aab-8514-481d-98fd-f627d4aaaede)
+![06 개발 계획](https://github.com/user-attachments/assets/1a3992d5-8aba-4039-9a35-080b58911c07)
+![07 Q A](https://github.com/user-attachments/assets/7f7c9286-d138-4210-9af9-8bf73c8f1c8b)
+![끝](https://github.com/user-attachments/assets/f0633cf0-47cf-47ea-b65c-75f334e30922)
