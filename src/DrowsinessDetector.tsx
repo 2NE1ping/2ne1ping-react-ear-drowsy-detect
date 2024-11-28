@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { FaceMesh } from "@mediapipe/face_mesh";
 import * as cam from "@mediapipe/camera_utils";
+import Header from "./Header";
+import axios from "axios";
 
 const DrowsinessDetector: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -18,8 +20,8 @@ const DrowsinessDetector: React.FC = () => {
   const alarmSoundRef = useRef(new Audio("/alert.mp3"));
   const isPlayingRef = useRef(false); // 현재 알람이 재생 중인지 여부를 저장
   const alarmCountRef = useRef(0); // 알람 재생 횟수를 저장하는 Ref
+  const [isDrowsyByServer, setIsDrowsyByServer] = useState(false);
 
-  // 알람 소리 재생 함수
   const playAlarm = () => {
     if (!isPlayingRef.current) {
       alarmSoundRef.current.play();
@@ -39,6 +41,30 @@ const DrowsinessDetector: React.FC = () => {
       };
     }
   };
+
+  // 서버에서 drowsy 상태 가져오기
+  useEffect(() => {
+    const fetchDrowsyStatus = async () => {
+      try {
+        const response = await axios.get("/consume");
+        if (
+          response.data.status === "drowsy" &&
+          response.data.data.drowsy === "1"
+        ) {
+          console.log("서버로부터 졸음 상태 감지:", response.data);
+          setIsDrowsyByServer(true);
+          playAlarm(); // 졸음 상태에서 알람 소리 재생
+        } else {
+          setIsDrowsyByServer(false); // 졸음 상태가 아니라면 상태 초기화
+        }
+      } catch (error) {
+        console.error("서버 요청 실패:", error);
+      }
+    };
+
+    const interval = setInterval(fetchDrowsyStatus, 5000); // 5초마다 요청
+    return () => clearInterval(interval); // 컴포넌트 언마운트 시 인터벌 클리어
+  }, []);
 
   useEffect(() => {
     if (isDrowsyByEAR) {
@@ -332,6 +358,7 @@ const DrowsinessDetector: React.FC = () => {
 
   return (
     <>
+      <Header />
       <video ref={videoRef} autoPlay style={{ display: "none" }} />
       <canvas ref={canvasRef} width={640} height={480} />
       {isDrowsyByEAR && (
@@ -386,19 +413,19 @@ const DrowsinessDetector: React.FC = () => {
           장시간 눈 감음 감지! (by EAR)
         </div>
       )}
-      {/* {isBlinkFrequencyLow && (
+      {isDrowsyByServer && (
         <div
           style={{
-            color: "purple",
+            color: "red",
             fontSize: "24px",
             position: "absolute",
             top: "170px",
             right: "10px",
           }}
         >
-          깜빡임 빈도 감소 감지! (by EAR)
+          서버에서 졸음 상태 감지!
         </div>
-      )} */}
+      )}
     </>
   );
 };

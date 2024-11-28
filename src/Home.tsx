@@ -1,30 +1,18 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import styles from "./Home.module.css";
 import Logo from "./assets/AppLogo.png";
 
 const Home: React.FC = () => {
   return (
-    <div style={{ textAlign: "center", padding: "20px" }}>
-      <img
-        src={Logo}
-        alt="App Logo"
-        style={{ width: "150px", marginBottom: "20px" }}
-      />
-      <h1>메인페이지</h1>
-      <Link to="/connect">
-        <button
-          style={{
-            padding: "10px 20px",
-            fontSize: "16px",
-            cursor: "pointer",
-            border: "none",
-            borderRadius: "5px",
-            backgroundColor: "#007BFF",
-            color: "white",
-          }}
-        >
-          연결하기
-        </button>
+    <div className={styles.container}>
+      <img src={Logo} alt="App Logo" className={styles.logo} />
+      <h1 className={styles.title}>Watch? Wake!</h1>
+      <p className={styles.explain}>
+        HCI 개론 (캡스톤디자인) <br /> 이다연 조은채 최현서
+      </p>
+      <Link to="/connect" className={styles.link}>
+        <button className={styles.button}>시작하기</button>
       </Link>
     </div>
   );
