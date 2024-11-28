@@ -7,6 +7,8 @@ import axios from "axios";
 const DrowsinessDetector: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const [isDrowsy, setIsDrowsy] = useState(false);
   const [isDrowsyByEAR, setIsDrowsyByEAR] = useState(false);
   const [isYawning, setIsYawning] = useState(false);
   const [isDrowsyByPERCLOS, setIsDrowsyByPERCLOS] = useState(false);
@@ -23,6 +25,15 @@ const DrowsinessDetector: React.FC = () => {
   const [isDrowsyByServer, setIsDrowsyByServer] = useState(false);
 
   const [sensorData, setSensorData] = useState<string>("");
+
+  useEffect(() => {
+    if (isDrowsyByEAR || isYawning || isDrowsyByPERCLOS || isDrowsyByServer) {
+      setIsDrowsy(true);
+    } else {
+      setIsDrowsy(false);
+    }
+    console.log("isDrowsy:", isDrowsy);
+  }, [isDrowsy]);
 
   useEffect(() => {
     const ws = new WebSocket("ws://localhost:8080");
@@ -47,7 +58,7 @@ const DrowsinessDetector: React.FC = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      console.log("Sensor Data:", sensorData);
+      // console.log("Sensor Data:", sensorData);
     }, 5000);
 
     return () => clearInterval(interval);
@@ -91,6 +102,20 @@ const DrowsinessDetector: React.FC = () => {
     }
   };
 
+  // // TODO: 실행되도록 수정하면 주석해제
+  // useEffect(() => {
+  //   const executeActions = async () => {
+  //     if (isDrowsy && !isDrowsyByServer) {
+  //       playAlarm();
+  //       await handleButtonClick("camera");
+  //     } else if (isDrowsy && isDrowsyByServer) {
+  //       playAlarm();
+  //       await handleButtonClick("muse2");
+  //     }
+  //   };
+  //   executeActions();
+  // }, [isDrowsy, isDrowsyByServer, playAlarm, handleButtonClick]);
+
   // 서버에서 drowsy 상태 가져오기
   useEffect(() => {
     const fetchDrowsyStatus = async () => {
@@ -103,6 +128,7 @@ const DrowsinessDetector: React.FC = () => {
           console.log("서버로부터 졸음 상태 감지:", response.data);
           setIsDrowsyByServer(true);
           playAlarm(); // 졸음 상태에서 알람 소리 재생
+          handleButtonClick("muse2");
         } else {
           setIsDrowsyByServer(false); // 졸음 상태가 아니라면 상태 초기화
         }
@@ -115,17 +141,18 @@ const DrowsinessDetector: React.FC = () => {
     return () => clearInterval(interval); // 컴포넌트 언마운트 시 인터벌 클리어
   }, []);
 
-  useEffect(() => {
-    if (isDrowsyByEAR) {
-      console.log("EAR 상태:", isDrowsyByEAR);
-    }
-    if (isYawning) {
-      console.log("하품 상태:", isYawning);
-    }
-    if (isDrowsyByPERCLOS) {
-      console.log("PERCLOS 상태:", isDrowsyByPERCLOS);
-    }
-  }, [isDrowsyByEAR, isYawning, isDrowsyByPERCLOS]);
+  // useEffect(() => {
+  //   if (isDrowsyByEAR) {
+  //     console.log("EAR 상태:", isDrowsyByEAR);
+  //   }
+  //   if (isYawning) {
+  //     console.log("하품 상태:", isYawning);
+  //   }
+  //   if (isDrowsyByPERCLOS) {
+  //     console.log("PERCLOS 상태:", isDrowsyByPERCLOS);
+  //   }
+  // }, [isDrowsyByEAR, isYawning, isDrowsyByPERCLOS]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       const currentTime = Date.now();
@@ -344,7 +371,11 @@ const DrowsinessDetector: React.FC = () => {
           if (perclos > PERCLOS_THRESHOLD) {
             setIsDrowsyByPERCLOS(true);
             // alert("졸음이 감지되었습니다! 잠시 휴식을 취하세요. by PERCLOS");
+            console.log(
+              "졸음이 감지되었습니다! 잠시 휴식을 취하세요. by PERCLOS"
+            );
             playAlarm();
+            handleButtonClick("camera");
             lastAlertTime = currentTime;
           } else {
             setIsDrowsyByPERCLOS(false);
@@ -385,7 +416,11 @@ const DrowsinessDetector: React.FC = () => {
           currentTime - lastAlertTime > DROWSINESS_ALERT_INTERVAL
         ) {
           // alert("졸음이 감지되었습니다! 잠시 휴식을 취하세요. by EAR and yawn");
+          console.log(
+            "졸음이 감지되었습니다! 잠시 휴식을 취하세요. by EAR and yawn"
+          );
           playAlarm();
+          handleButtonClick("camera");
           lastAlertTime = currentTime;
         } else {
         }
