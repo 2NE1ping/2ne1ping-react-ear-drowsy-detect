@@ -1,0 +1,92 @@
+/* 전체 컨테이너를 화면에 맞게 설정 */
+.container {
+  display: flex;
+  flex-direction: column; /* 요소를 세로 정렬 */
+  align-items: center; /* 가로 가운데 정렬 */
+  justify-content: center; /* 세로 가운데 정렬 */
+  height: 100vh; /* 뷰포트 전체 높이 */
+  width: 100vw; /* 뷰포트 전체 너비 */
+  position: relative; /* 상태 메시지 배치를 위해 필요 */
+  background-color: #f4f4f4; /* 배경색 */
+  font-family: Arial, sans-serif; /* 폰트 설정 */
+}
+
+/* 캔버스 스타일 */
+.canvas {
+  width: 100%; /* 부모의 너비에 맞춤 */
+  max-width: 640px; /* 최대 너비 제한 */
+  height: auto; /* 비율 유지 */
+  border: 1px solid #ddd; /* 경계선 추가 */
+  border-radius: 8px; /* 모서리를 둥글게 */
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* 그림자 추가 */
+}
+
+/* 상태 메시지 스타일 */
+.statusMessage {
+  font-size: 24px;
+  font-weight: bold;
+  position: absolute;
+  right: 10px; /* 오른쪽 여백 */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); /* 텍스트 그림자 */
+}
+
+.earStatus {
+  top: 10%; /* 상대 위치 */
+  color: blue;
+}
+
+.yawnStatus {
+  top: 20%;
+  color: orange;
+}
+
+.perclosStatus {
+  top: 30%;
+  color: red;
+}
+
+.longEyeClosureStatus {
+  top: 40%;
+  color: red;
+}
+.video {
+  display: none;
+}
+
+.canvas {
+  width: 390px;
+  height: 230px;
+}
+
+.alert {
+  color: blue;
+  font-size: 24px;
+  position: absolute;
+  right: 10px;
+}
+
+.earAlert {
+  top: 10px;
+  color: blue;
+}
+
+.yawnAlert {
+  top: 50px;
+  color: orange;
+}
+
+.perclosAlert {
+  top: 90px;
+  color: red;
+}
+
+.longEyeClosureAlert {
+  top: 130px;
+  color: red;
+}
+
+/* 깜빡임 빈도 감소 알림 스타일 (사용 시 활성화) */
+/* .blinkFrequencyAlert {
+    top: 170px;
+    color: purple;
+  } */
