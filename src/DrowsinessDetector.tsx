@@ -22,6 +22,55 @@ const DrowsinessDetector: React.FC = () => {
   const alarmCountRef = useRef(0); // 알람 재생 횟수를 저장하는 Ref
   const [isDrowsyByServer, setIsDrowsyByServer] = useState(false);
 
+  const [sensorData, setSensorData] = useState<string>("");
+
+  useEffect(() => {
+    const ws = new WebSocket("ws://localhost:8080");
+
+    ws.onmessage = (event) => {
+      console.log("Received from Arduino:", event.data);
+      setSensorData(event.data);
+    };
+
+    ws.onopen = () => {
+      console.log("Connected to WebSocket server");
+    };
+
+    ws.onclose = () => {
+      console.log("Disconnected from WebSocket server");
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log("Sensor Data:", sensorData);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [sensorData]);
+
+  const handleButtonClick = async (path: string = "") => {
+    try {
+      const response = await fetch(
+        `http://localhost:3000/upload-sketch/${path}`,
+        {
+          method: "POST",
+        }
+      );
+      if (response.ok) {
+        console.log("Arduino sketch upload initiated.");
+      } else {
+        console.error("Failed to initiate Arduino sketch upload.");
+      }
+    } catch (error) {
+      console.error("Error sending POST request:", error);
+    }
+  };
+
   const playAlarm = () => {
     if (!isPlayingRef.current) {
       alarmSoundRef.current.play();
@@ -426,6 +475,29 @@ const DrowsinessDetector: React.FC = () => {
           서버에서 졸음 상태 감지!
         </div>
       )}
+
+      {/* 아두이노 연결 확인용 */}
+      <div
+        style={{
+          color: "green",
+          fontSize: "24px",
+          position: "absolute",
+          top: "210px",
+          right: "10px",
+        }}
+      >
+        Sensor Data: {sensorData}
+      </div>
+
+      <button onClick={() => handleButtonClick()}>아두이노 실행</button>
+
+      {/* TODO: 음성 재생 쪽으로 이동*/}
+      <button onClick={() => handleButtonClick("camera")}>
+        영상에서 졸음 감지 시 노란색 LED 켜기
+      </button>
+      <button onClick={() => handleButtonClick("muse2")}>
+        MUSE2에서 졸음 감지 시 파란색 LED 켜기
+      </button>
     </>
   );
 };
