@@ -74,11 +74,11 @@ const Connect: React.FC = () => {
 
   return (
     <div className="App" style={styles.container}>
-      <h1 style={styles.header}>Kafka Connection Status</h1>
+      <h1 style={styles.header}>기기 연결 페이지</h1>
 
       {error ? (
         <div style={styles.errorContainer}>
-          <h2 style={styles.errorMessage}>Error</h2>
+          <h2 style={styles.errorMessage}>서버 연결 실패</h2>
           <p>{error}</p>
         </div>
       ) : isLoading ? (
@@ -90,11 +90,11 @@ const Connect: React.FC = () => {
         <div>
           {isConnected ? (
             <div style={styles.successContainer}>
-              <h2 style={styles.successMessage}>Connected to Kafka Server</h2>
-              <div style={styles.messageContainer}>
+              <h2 style={styles.successMessage}>기기 연결에 성공했습니다!</h2>
+              {/* <div style={styles.messageContainer}>
                 <p>Source A: {settings?.A}</p>
                 <p>Source B: {settings?.B}</p>
-              </div>
+              </div> */}
               <button onClick={handleDetectClick} style={styles.detectButton}>
                 인식하기
               </button>
@@ -102,7 +102,15 @@ const Connect: React.FC = () => {
           ) : (
             <div style={styles.waitingContainer}>
               <h2 style={styles.waitingMessage}>{status}</h2>
+              <h2 style={styles.successMessage}>기기 연결에 실패했습니다...</h2>
               {!settings && <p>Waiting for messages...</p>}
+              <button
+                onClick={handleDetectClick}
+                style={styles.detectButton}
+                disabled
+              >
+                인식하기
+              </button>
             </div>
           )}
         </div>
