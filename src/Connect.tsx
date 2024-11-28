@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 interface Settings {
@@ -13,42 +14,44 @@ const Connect: React.FC = () => {
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     let isMounted = true;
     const maxAttempts = 60;
     let attempts = 0;
 
     const fetchMessages = async () => {
-      if (!isMounted) return;
+      if (!isMounted || isConnected) return;
 
       try {
+        attempts++;
         setStatus("Connecting to server...");
         setIsLoading(true);
 
-        const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/consume`
-        );
+        const response = await axios.get(`/consume`);
         const { status, data } = response.data;
 
-        setStatus(status);
-        if (status === "두 개의 메시지가 도착했습니다") {
+        if (
+          status === "두 개의 메시지가 도착했습니다" ||
+          status === "connection"
+        ) {
           setSettings(data);
           setIsConnected(true);
           setIsLoading(false);
           return;
         } else {
+          setStatus(status);
           setIsConnected(false);
         }
       } catch (error: any) {
         if (isMounted) {
-          console.error("Error fetching messages:", error);
           setError("Failed to fetch messages from the server.");
           setIsConnected(false);
           setIsLoading(false);
         }
       }
 
-      attempts++;
       if (attempts >= maxAttempts && isMounted) {
         setError("Timeout: No response from server after 1 minute.");
         setIsConnected(false);
@@ -63,7 +66,11 @@ const Connect: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isConnected]);
+
+  const handleDetectClick = () => {
+    navigate("/detect");
+  };
 
   return (
     <div className="App" style={styles.container}>
@@ -77,7 +84,7 @@ const Connect: React.FC = () => {
       ) : isLoading ? (
         <div style={styles.loadingContainer}>
           <div className="spinner" style={styles.spinner}></div>
-          <p style={styles.loadingText}>Connecting to server...</p>
+          <p style={styles.loadingText}>{status}</p>
         </div>
       ) : (
         <div>
@@ -88,6 +95,9 @@ const Connect: React.FC = () => {
                 <p>Source A: {settings?.A}</p>
                 <p>Source B: {settings?.B}</p>
               </div>
+              <button onClick={handleDetectClick} style={styles.detectButton}>
+                인식하기
+              </button>
             </div>
           ) : (
             <div style={styles.waitingContainer}>
@@ -166,4 +176,29 @@ const styles = {
     fontSize: "1.2rem",
     fontWeight: "bold",
   },
+  detectButton: {
+    marginTop: "20px",
+    padding: "10px 20px",
+    fontSize: "1rem",
+    color: "#fff",
+    backgroundColor: "#007BFF",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+  },
 };
+
+const spinnerCSS = `
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}`;
+
+const styleSheet = document.createElement("style");
+styleSheet.type = "text/css";
+styleSheet.innerText = spinnerCSS;
+document.head.appendChild(styleSheet);
