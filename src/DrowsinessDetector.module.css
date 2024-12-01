@@ -37,13 +37,15 @@
 }
 
 .buttonContainer {
-  margin-top: 20px;
+  margin-top: 30px;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
 .buttonContainer .button {
+  color: #3b3b3b;
+  background-color: #ffebeb;
   align-self: center;
   width: 150px;
 }
