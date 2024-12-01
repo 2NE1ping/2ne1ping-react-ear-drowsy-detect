@@ -9,6 +9,17 @@ const DrowsinessDetector: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // 알람 파일들을 상황에 맞게 로드
+  const alarmSounds = {
+    drowsy: new Audio("/alert_drowsy.mp3"),
+    yawn: new Audio("/alert_yawn.mp3"),
+    longEyeClosure: new Audio("/alert_long_eye_closure.mp3"),
+    serverDrowsy: new Audio("/alert_server_drowsy.mp3"),
+  };
+
+  const isPlayingRef = useRef(false); // 현재 알람이 재생 중인지 여부를 저장
+  const alarmCountRef = useRef(0); // 알람 재생 횟수를 저장하는 Ref
+
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isDrowsy, setIsDrowsy] = useState(false);
   const [isDrowsyByEAR, setIsDrowsyByEAR] = useState(false);
@@ -16,18 +27,17 @@ const DrowsinessDetector: React.FC = () => {
   const [isDrowsyByPERCLOS, setIsDrowsyByPERCLOS] = useState(false);
   const [isLongEyeClosureDetected, setIsLongEyeClosureDetected] =
     useState(false);
+  const [isDrowsyByServer, setIsDrowsyByServer] = useState(false);
+  const [sensorData, setSensorData] = useState<string>("");
+
+  useState(false);
   // const [isBlinkFrequencyLow, setIsBlinkFrequencyLow] = useState(false);
   const [blinkTimestamps, setBlinkTimestamps] = useState<number[]>([]);
   const BLINK_TIME_WINDOW = 10000; // 10초
   const NORMAL_BLINK_RATE = 15; // 예: BLINK_TIME_WINDOW 동안 15회 깜빡임이 정상
 
-  const alarmSoundRef = useRef(new Audio("/alert.mp3"));
-  const isPlayingRef = useRef(false); // 현재 알람이 재생 중인지 여부를 저장
-  const alarmCountRef = useRef(0); // 알람 재생 횟수를 저장하는 Ref
-  const [isDrowsyByServer, setIsDrowsyByServer] = useState(false);
-
-  const [sensorData, setSensorData] = useState<string>("");
-  const [alarmReason, setAlarmReason] = useState<string>(""); // 알람 원인 저장
+  // const alarmSoundRef = useRef(new Audio("/alert.mp3"));
+  // const [alarmReason, setAlarmReason] = useState<string>(""); // 알람 원인 저장
 
   useEffect(() => {
     if (isDrowsyByEAR || isYawning || isDrowsyByPERCLOS || isDrowsyByServer) {
@@ -120,27 +130,61 @@ const DrowsinessDetector: React.FC = () => {
     }
   };
 
+  // 알람을 상황에 따라 다르게 지정하는 함수
   const playAlarm = (reason: string) => {
     if (!isPlayingRef.current) {
-      setAlarmReason(reason); // 알람 원인 설정
-      alarmSoundRef.current.play();
-      isPlayingRef.current = true;
-      alarmCountRef.current = 0; // 새로운 알람 재생 시작 시 카운트 초기화
+      // 상황에 맞는 알람 소리를 선택
+      let selectedAlarm: HTMLAudioElement | null = null;
 
-      // 알람이 끝나면 바로 다음 알람을 재생
-      alarmSoundRef.current.onended = () => {
-        alarmCountRef.current += 1; // 알람 재생 횟수 증가
-        if (alarmCountRef.current < 3) {
-          // 3번 울리기까지 지연 없이 연속 재생
-          alarmSoundRef.current.play();
-        } else {
-          // 3번 다 울린 후에는 재생 종료
-          isPlayingRef.current = false;
-          setAlarmReason(""); // 알람 원인 초기화
-        }
-      };
+      switch (reason) {
+        case "drowsy":
+          selectedAlarm = alarmSounds.drowsy;
+          break;
+        case "yawn":
+          selectedAlarm = alarmSounds.yawn;
+          break;
+        case "longEyeClosure":
+          selectedAlarm = alarmSounds.longEyeClosure;
+          break;
+        case "serverDrowsy":
+          selectedAlarm = alarmSounds.serverDrowsy;
+          break;
+        default:
+          return;
+      }
+
+      if (selectedAlarm) {
+        selectedAlarm.play();
+        isPlayingRef.current = true;
+        alarmCountRef.current = 0; // 알람 재생 횟수 초기화
+
+        selectedAlarm.onended = () => {
+          alarmCountRef.current += 1;
+          if (alarmCountRef.current < 2) {
+            selectedAlarm!.play();
+          } else {
+            isPlayingRef.current = false;
+          }
+        };
+      }
     }
   };
+
+  // 졸음 상태에 따른 알람 재생
+  useEffect(() => {
+    if (isDrowsyByEAR) {
+      console.log("EAR 상태: 졸음 감지");
+    } else if (isYawning) {
+      console.log("하품 상태 감지");
+      playAlarm("yawn");
+    } else if (isLongEyeClosureDetected) {
+      console.log("장시간 눈 감음 감지");
+      playAlarm("longEyeClosure");
+    } else if (isDrowsyByServer) {
+      console.log("서버에서 졸음 감지");
+      playAlarm("serverDrowsy");
+    }
+  }, [isDrowsyByEAR, isYawning, isLongEyeClosureDetected, isDrowsyByServer]);
 
   // // TODO: 실행되도록 수정하면 주석해제
   // useEffect(() => {
@@ -526,11 +570,11 @@ const DrowsinessDetector: React.FC = () => {
           {isDrowsy ? (
             <span className={styles.status}> 졸음 상태 감지!</span>
           ) : isYawning ? (
-            <span className={styles.status}> (하품 감지! MAR)</span>
+            <span className={styles.status}> 하품 감지! MAR</span>
           ) : isLongEyeClosureDetected ? (
-            <span className={styles.status}>(장시간 눈 감음 감지! by EAR)</span>
+            <span className={styles.status}>장시간 눈 감음 감지! by EAR</span>
           ) : isDrowsyByServer ? (
-            <span className={styles.status}> (서버에서 졸음 상태 감지!)</span>
+            <span className={styles.status}> 서버에서 졸음 상태 감지!</span>
           ) : null}
         </div>
       </div>
