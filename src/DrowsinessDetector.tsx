@@ -3,11 +3,13 @@ import { FaceMesh } from "@mediapipe/face_mesh";
 import * as cam from "@mediapipe/camera_utils";
 import Header from "./Header";
 import axios from "axios";
+import styles from "./DrowsinessDetector.module.css";
 
 const DrowsinessDetector: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const [isCameraOn, setIsCameraOn] = useState(false);
   const [isDrowsy, setIsDrowsy] = useState(false);
   const [isDrowsyByEAR, setIsDrowsyByEAR] = useState(false);
   const [isYawning, setIsYawning] = useState(false);
@@ -25,6 +27,7 @@ const DrowsinessDetector: React.FC = () => {
   const [isDrowsyByServer, setIsDrowsyByServer] = useState(false);
 
   const [sensorData, setSensorData] = useState<string>("");
+  const [alarmReason, setAlarmReason] = useState<string>(""); // 알람 원인 저장
 
   useEffect(() => {
     if (isDrowsyByEAR || isYawning || isDrowsyByPERCLOS || isDrowsyByServer) {
@@ -34,6 +37,29 @@ const DrowsinessDetector: React.FC = () => {
     }
     console.log("isDrowsy:", isDrowsy);
   }, [isDrowsy]);
+
+  // 상태 메시지를 일정 시간 동안 유지하기 위한 useEffect
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    if (isDrowsy || isYawning || isLongEyeClosureDetected || isDrowsyByServer) {
+      timeout = setTimeout(() => {
+        setIsDrowsy(false);
+        setIsYawning(false);
+        setIsLongEyeClosureDetected(false);
+        setIsDrowsyByServer(false);
+      }, 10000); // 10초 동안 상태 메시지 유지
+    }
+    return () => clearTimeout(timeout);
+  }, [isDrowsy, isYawning, isLongEyeClosureDetected, isDrowsyByServer]);
+
+  useEffect(() => {
+    if (sensorData) {
+      const timeout = setTimeout(() => {
+        setSensorData(""); // 일정 시간이 지나면 sensorData를 초기화
+      }, 10000); // 10초 동안 sensorData 유지
+      return () => clearTimeout(timeout);
+    }
+  }, [sensorData]);
 
   useEffect(() => {
     const ws = new WebSocket("ws://localhost:8080");
@@ -55,6 +81,18 @@ const DrowsinessDetector: React.FC = () => {
       ws.close();
     };
   }, []);
+
+  // useEffect(() => {
+  //   if (isDrowsyByEAR) {
+  //     console.log("EAR 상태:", isDrowsyByEAR);
+  //   }
+  //   if (isYawning) {
+  //     console.log("하품 상태:", isYawning);
+  //   }
+  //   if (isDrowsyByPERCLOS) {
+  //     console.log("PERCLOS 상태:", isDrowsyByPERCLOS);
+  //   }
+  // }, [isDrowsyByEAR, isYawning, isDrowsyByPERCLOS]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -82,8 +120,9 @@ const DrowsinessDetector: React.FC = () => {
     }
   };
 
-  const playAlarm = () => {
+  const playAlarm = (reason: string) => {
     if (!isPlayingRef.current) {
+      setAlarmReason(reason); // 알람 원인 설정
       alarmSoundRef.current.play();
       isPlayingRef.current = true;
       alarmCountRef.current = 0; // 새로운 알람 재생 시작 시 카운트 초기화
@@ -97,6 +136,7 @@ const DrowsinessDetector: React.FC = () => {
         } else {
           // 3번 다 울린 후에는 재생 종료
           isPlayingRef.current = false;
+          setAlarmReason(""); // 알람 원인 초기화
         }
       };
     }
@@ -127,7 +167,8 @@ const DrowsinessDetector: React.FC = () => {
         ) {
           console.log("서버로부터 졸음 상태 감지:", response.data);
           setIsDrowsyByServer(true);
-          playAlarm(); // 졸음 상태에서 알람 소리 재생
+          playAlarm("서버에서 졸음 상태 감지"); // 졸음 상태에서 알람 소리 재생
+
           handleButtonClick("muse2");
         } else {
           setIsDrowsyByServer(false); // 졸음 상태가 아니라면 상태 초기화
@@ -247,12 +288,26 @@ const DrowsinessDetector: React.FC = () => {
     };
 
     faceMesh.onResults((results) => {
+      if (!isCameraOn) {
+        return; // 카메라가 꺼져있으면 얼굴 인식을 하지 않음
+      }
+
       if (results.multiFaceLandmarks && results.multiFaceLandmarks[0]) {
         const landmarks = results.multiFaceLandmarks[0];
 
         if (canvasRef.current) {
           const canvasCtx = canvasRef.current.getContext("2d");
+
           if (canvasCtx) {
+            // 캔버스 해상도 및 크기 조정
+            canvasRef.current.width = 1280;
+            canvasRef.current.height = 960;
+            canvasCtx.clearRect(
+              0,
+              0,
+              canvasRef.current.width,
+              canvasRef.current.height
+            );
             canvasCtx.clearRect(
               0,
               0,
@@ -274,7 +329,7 @@ const DrowsinessDetector: React.FC = () => {
                 canvasCtx.arc(
                   landmark.x * canvasRef.current!.width,
                   landmark.y * canvasRef.current!.height,
-                  2,
+                  5,
                   0,
                   2 * Math.PI
                 );
@@ -312,7 +367,7 @@ const DrowsinessDetector: React.FC = () => {
               canvasCtx.arc(
                 landmark.x * canvasRef.current!.width,
                 landmark.y * canvasRef.current!.height,
-                2,
+                5,
                 0,
                 2 * Math.PI
               );
@@ -374,7 +429,8 @@ const DrowsinessDetector: React.FC = () => {
             console.log(
               "졸음이 감지되었습니다! 잠시 휴식을 취하세요. by PERCLOS"
             );
-            playAlarm();
+            playAlarm("PERCLOS에 의한 졸음 상태 감지"); // 졸음 상태에서 알람 소리 재생
+
             handleButtonClick("camera");
             lastAlertTime = currentTime;
           } else {
@@ -419,7 +475,7 @@ const DrowsinessDetector: React.FC = () => {
           console.log(
             "졸음이 감지되었습니다! 잠시 휴식을 취하세요. by EAR and yawn"
           );
-          playAlarm();
+          playAlarm("EAR 또는 하품 의한 졸음 상태 감지"); // 졸음 상태에서 알람 소리 재생
           handleButtonClick("camera");
           lastAlertTime = currentTime;
         } else {
@@ -431,108 +487,74 @@ const DrowsinessDetector: React.FC = () => {
     if (videoRef.current) {
       const camera = new cam.Camera(videoRef.current, {
         onFrame: async () => {
-          await faceMesh.send({ image: videoRef.current! });
+          if (isCameraOn) {
+            await faceMesh.send({ image: videoRef.current! });
+          }
         },
         width: 640,
         height: 480,
       });
+
+      if (isCameraOn) {
+        camera.start();
+      } else {
+        camera.stop();
+      }
       camera.start();
     }
-  }, []);
+  }, [isCameraOn]);
+
+  const toggleCamera = () => {
+    setIsCameraOn((prev) => !prev);
+  };
 
   return (
     <>
       <Header />
-      <video ref={videoRef} autoPlay style={{ display: "none" }} />
-      <canvas ref={canvasRef} width={640} height={480} />
-      {isDrowsyByEAR && (
-        <div
-          style={{
-            color: "blue",
-            fontSize: "24px",
-            position: "absolute",
-            top: "10px",
-            right: "10px",
-          }}
-        >
-          눈 깜빡임 비율 감지! (EAR)
-        </div>
-      )}
-      {isYawning && (
-        <div
-          style={{
-            color: "orange",
-            fontSize: "24px",
-            position: "absolute",
-            top: "50px",
-            right: "10px",
-          }}
-        >
-          하품 감지! (MAR)
-        </div>
-      )}
-      {isDrowsyByPERCLOS && (
-        <div
-          style={{
-            color: "red",
-            fontSize: "24px",
-            position: "absolute",
-            top: "90px",
-            right: "10px",
-          }}
-        >
-          장시간 눈 감음 감지! (PERCLOS)
-        </div>
-      )}
-      {isLongEyeClosureDetected && (
-        <div
-          style={{
-            color: "red",
-            fontSize: "24px",
-            position: "absolute",
-            top: "130px",
-            right: "10px",
-          }}
-        >
-          장시간 눈 감음 감지! (by EAR)
-        </div>
-      )}
-      {isDrowsyByServer && (
-        <div
-          style={{
-            color: "red",
-            fontSize: "24px",
-            position: "absolute",
-            top: "170px",
-            right: "10px",
-          }}
-        >
-          서버에서 졸음 상태 감지!
-        </div>
-      )}
-
-      {/* 아두이노 연결 확인용 */}
-      <div
+      <video ref={videoRef} style={{ display: "none" }} />
+      <canvas
+        ref={canvasRef}
         style={{
-          color: "green",
-          fontSize: "24px",
-          position: "absolute",
-          top: "210px",
-          right: "10px",
+          display: isCameraOn ? "block" : "none",
+          width: "100%",
+          height: "100%",
         }}
-      >
-        Sensor Data: {sensorData}
+      />
+      <div className={styles.statusContainer}>
+        <div className={styles.sensorData}>
+          현재 상태 : {sensorData}
+          {isDrowsy ? (
+            <span className={styles.status}> 졸음 상태 감지!</span>
+          ) : isYawning ? (
+            <span className={styles.status}> (하품 감지! MAR)</span>
+          ) : isLongEyeClosureDetected ? (
+            <span className={styles.status}>(장시간 눈 감음 감지! by EAR)</span>
+          ) : isDrowsyByServer ? (
+            <span className={styles.status}> (서버에서 졸음 상태 감지!)</span>
+          ) : null}
+        </div>
       </div>
 
-      <button onClick={() => handleButtonClick()}>아두이노 실행</button>
-
-      {/* TODO: 음성 재생 쪽으로 이동*/}
-      <button onClick={() => handleButtonClick("camera")}>
-        영상에서 졸음 감지 시 노란색 LED 켜기
-      </button>
-      <button onClick={() => handleButtonClick("muse2")}>
-        MUSE2에서 졸음 감지 시 파란색 LED 켜기
-      </button>
+      <div className={styles.buttonContainer}>
+        <button className={styles.button} onClick={toggleCamera}>
+          {isCameraOn ? "카메라 끄기" : "카메라 켜기"}
+        </button>
+        <button className={styles.button} onClick={() => handleButtonClick()}>
+          아두이노 실행
+        </button>
+        <button
+          className={styles.button}
+          onClick={() => handleButtonClick("camera")}
+        >
+          영상에서 졸음 감지 시 노란색 LED 켜기
+        </button>
+        <button
+          className={styles.button}
+          onClick={() => handleButtonClick("muse2")}
+        >
+          MUSE2에서 졸음 감지 시 파란색 LED 켜기
+        </button>
+      </div>
     </>
   );
 };

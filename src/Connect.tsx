@@ -3,23 +3,40 @@ import { useNavigate } from "react-router-dom";
 import styles from "./Connect.module.css";
 import Header from "./Header";
 import muse2 from "./assets/muse2.png";
+import arduino from "./assets/arduino.png";
 
 const Connect: React.FC = () => {
-  const [status, setStatus] = useState<string>("Initializing connection...");
+  const [status, setStatus] = useState<string>("Muse2 연결 초기화 중...");
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isArduinoConnected, setIsArduinoConnected] = useState<boolean>(false);
+  const [arduinoStatus, setArduinoStatus] =
+    useState<string>("아두이노 연결 초기화 중...");
+  const [isArduinoLoading, setIsArduinoLoading] = useState<boolean>(true);
 
   const navigate = useNavigate();
 
+  // Muse2 연결 시뮬레이션
   useEffect(() => {
-    const simulateLoading = async () => {
-      setStatus("Connecting to server...");
+    const connectMuse2 = async () => {
+      setStatus("Muse2에 연결 중...");
       await new Promise((resolve) => setTimeout(resolve, 3000)); // 3초 로딩 시뮬레이션
-      setIsConnected(true); // 로딩 완료 후 연결 성공 상태로 변경
-      setIsLoading(false); // 로딩 상태 해제
+      setStatus("Muse2 연결 완료!");
+      setIsConnected(true);
+      setIsLoading(false);
     };
 
-    simulateLoading();
+    const connectArduino = async () => {
+      setArduinoStatus("아두이노에 연결 중...");
+      await new Promise((resolve) => setTimeout(resolve, 4000)); // 4초 로딩 시뮬레이션
+      setArduinoStatus("아두이노 연결 완료!");
+      setIsArduinoConnected(true);
+      setIsArduinoLoading(false);
+    };
+
+    // 두 연결을 동시에 시작
+    connectMuse2();
+    connectArduino();
   }, []);
 
   const handleDetectClick = () => {
@@ -32,40 +49,45 @@ const Connect: React.FC = () => {
       <div className={styles.container}>
         <h1 className={styles.header}>기기 연결</h1>
 
-        {isLoading ? (
-          <div className={styles.loadingContainer}>
-            <div className={styles.spinner}></div>
-            <p className={styles.loadingText}>{status}</p>
-          </div>
-        ) : (
-          <div>
-            {isConnected ? (
-              <div className={styles.successContainer}>
-                <h2 className={styles.successMessage}>
-                  기기 연결에 성공했습니다!
-                </h2>
-                <img src={muse2} className={styles.rotatedimage} />
-                <button
-                  onClick={handleDetectClick}
-                  className={styles.detectButton}
-                >
-                  인식하기
-                </button>
-              </div>
-            ) : (
-              <div className={styles.waitingContainer}>
-                <h2 className={styles.waitingMessage}>기기 연결 실패</h2>
-                <button
-                  onClick={handleDetectClick}
-                  className={styles.detectButton}
-                  disabled
-                >
-                  인식하기
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+        <div className={styles.deviceContainer}>
+          <h2 className={styles.deviceHeader}>Muse2</h2>
+          {isLoading ? (
+            <div className={styles.loadingContainer}>
+              <div className={styles.spinner}></div>
+              <p className={styles.loadingText}>{status}</p>
+            </div>
+          ) : (
+            <div className={styles.successContainer}>
+              <p className={styles.successMessage}>{status}</p>
+              <img src={muse2} className={styles.rotatedimage} />
+            </div>
+          )}
+        </div>
+
+        <div className={styles.deviceContainer}>
+          <h2 className={styles.deviceHeader}>아두이노</h2>
+          {isArduinoLoading ? (
+            <div className={styles.loadingContainer}>
+              <div className={styles.spinner}></div>
+              <p className={styles.loadingText}>{arduinoStatus}</p>
+            </div>
+          ) : (
+            <div className={styles.successContainer}>
+              <p className={styles.successMessage}>{arduinoStatus}</p>
+              <img src={arduino} className={styles.showimage} />
+            </div>
+          )}
+        </div>
+
+        <div className={styles.actionContainer}>
+          <button
+            onClick={handleDetectClick}
+            className={styles.detectButton}
+            disabled={!isConnected || !isArduinoConnected}
+          >
+            인식하기
+          </button>
+        </div>
       </div>
     </>
   );
