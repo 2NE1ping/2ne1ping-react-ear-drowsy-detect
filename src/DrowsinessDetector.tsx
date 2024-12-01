@@ -27,6 +27,7 @@ const DrowsinessDetector: React.FC = () => {
   const [isDrowsyByServer, setIsDrowsyByServer] = useState(false);
 
   const [sensorData, setSensorData] = useState<string>("");
+  const [alarmReason, setAlarmReason] = useState<string>(""); // 알람 원인 저장
 
   useEffect(() => {
     if (isDrowsyByEAR || isYawning || isDrowsyByPERCLOS || isDrowsyByServer) {
@@ -58,6 +59,18 @@ const DrowsinessDetector: React.FC = () => {
     };
   }, []);
 
+  // useEffect(() => {
+  //   if (isDrowsyByEAR) {
+  //     console.log("EAR 상태:", isDrowsyByEAR);
+  //   }
+  //   if (isYawning) {
+  //     console.log("하품 상태:", isYawning);
+  //   }
+  //   if (isDrowsyByPERCLOS) {
+  //     console.log("PERCLOS 상태:", isDrowsyByPERCLOS);
+  //   }
+  // }, [isDrowsyByEAR, isYawning, isDrowsyByPERCLOS]);
+
   useEffect(() => {
     const interval = setInterval(() => {
       // console.log("Sensor Data:", sensorData);
@@ -84,8 +97,9 @@ const DrowsinessDetector: React.FC = () => {
     }
   };
 
-  const playAlarm = () => {
+  const playAlarm = (reason: string) => {
     if (!isPlayingRef.current) {
+      setAlarmReason(reason); // 알람 원인 설정
       alarmSoundRef.current.play();
       isPlayingRef.current = true;
       alarmCountRef.current = 0; // 새로운 알람 재생 시작 시 카운트 초기화
@@ -99,6 +113,7 @@ const DrowsinessDetector: React.FC = () => {
         } else {
           // 3번 다 울린 후에는 재생 종료
           isPlayingRef.current = false;
+          setAlarmReason(""); // 알람 원인 초기화
         }
       };
     }
@@ -129,7 +144,8 @@ const DrowsinessDetector: React.FC = () => {
         ) {
           console.log("서버로부터 졸음 상태 감지:", response.data);
           setIsDrowsyByServer(true);
-          playAlarm(); // 졸음 상태에서 알람 소리 재생
+          playAlarm("서버에서 졸음 상태 감지"); // 졸음 상태에서 알람 소리 재생
+
           handleButtonClick("muse2");
         } else {
           setIsDrowsyByServer(false); // 졸음 상태가 아니라면 상태 초기화
@@ -250,8 +266,9 @@ const DrowsinessDetector: React.FC = () => {
 
     faceMesh.onResults((results) => {
       if (!isCameraOn) {
-        return;
+        return; // 카메라가 꺼져있으면 얼굴 인식을 하지 않음
       }
+
       if (results.multiFaceLandmarks && results.multiFaceLandmarks[0]) {
         const landmarks = results.multiFaceLandmarks[0];
 
@@ -389,7 +406,8 @@ const DrowsinessDetector: React.FC = () => {
             console.log(
               "졸음이 감지되었습니다! 잠시 휴식을 취하세요. by PERCLOS"
             );
-            playAlarm();
+            playAlarm("PERCLOS에 의한 졸음 상태 감지"); // 졸음 상태에서 알람 소리 재생
+
             handleButtonClick("camera");
             lastAlertTime = currentTime;
           } else {
@@ -434,7 +452,7 @@ const DrowsinessDetector: React.FC = () => {
           console.log(
             "졸음이 감지되었습니다! 잠시 휴식을 취하세요. by EAR and yawn"
           );
-          playAlarm();
+          playAlarm("EAR 또는 하품 의한 졸음 상태 감지"); // 졸음 상태에서 알람 소리 재생
           handleButtonClick("camera");
           lastAlertTime = currentTime;
         } else {
@@ -446,14 +464,22 @@ const DrowsinessDetector: React.FC = () => {
     if (videoRef.current) {
       const camera = new cam.Camera(videoRef.current, {
         onFrame: async () => {
-          await faceMesh.send({ image: videoRef.current! });
+          if (isCameraOn) {
+            await faceMesh.send({ image: videoRef.current! });
+          }
         },
         width: 640,
         height: 480,
       });
+
+      if (isCameraOn) {
+        camera.start();
+      } else {
+        camera.stop();
+      }
       camera.start();
     }
-  }, []);
+  }, [isCameraOn]);
 
   const toggleCamera = () => {
     setIsCameraOn((prev) => !prev);
@@ -468,7 +494,7 @@ const DrowsinessDetector: React.FC = () => {
         style={{
           display: isCameraOn ? "block" : "none",
           width: "100%",
-          height: "140%",
+          height: "100%",
         }}
       />
       <div className={styles.statusContainer}>

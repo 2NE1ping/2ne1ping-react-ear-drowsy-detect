@@ -26,14 +26,14 @@
   padding: 20px;
   background-color: #f9f9f9;
   border: 1px solid #e0e0e0;
-  border-radius: 12px;
+
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
 .status {
-  margin-left: 10px; /* Sensor Data와 간격 조정 */
-  font-weight: bold; /* 강조 */
-  color: red; /* 텍스트 색상 */
+  margin-left: 10px;
+  font-weight: bold;
+  color: #ff4c4c;
 }
 
 .buttonContainer {
@@ -47,7 +47,8 @@
   color: #3b3b3b;
   background-color: #ffebeb;
   align-self: center;
-  width: 150px;
+  width: 75%;
+  white-space: nowrap;
 }
 
 .buttonContainer {
