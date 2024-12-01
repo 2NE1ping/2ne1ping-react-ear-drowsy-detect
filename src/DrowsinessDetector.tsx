@@ -9,6 +9,7 @@ const DrowsinessDetector: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  const [isCameraOn, setIsCameraOn] = useState(false);
   const [isDrowsy, setIsDrowsy] = useState(false);
   const [isDrowsyByEAR, setIsDrowsyByEAR] = useState(false);
   const [isYawning, setIsYawning] = useState(false);
@@ -248,6 +249,9 @@ const DrowsinessDetector: React.FC = () => {
     };
 
     faceMesh.onResults((results) => {
+      if (!isCameraOn) {
+        return;
+      }
       if (results.multiFaceLandmarks && results.multiFaceLandmarks[0]) {
         const landmarks = results.multiFaceLandmarks[0];
 
@@ -451,6 +455,10 @@ const DrowsinessDetector: React.FC = () => {
     }
   }, []);
 
+  const toggleCamera = () => {
+    setIsCameraOn((prev) => !prev);
+  };
+
   return (
     <>
       <Header />
@@ -458,50 +466,30 @@ const DrowsinessDetector: React.FC = () => {
       <canvas
         ref={canvasRef}
         style={{
-          display: "block",
+          display: isCameraOn ? "block" : "none",
           width: "100%",
           height: "140%",
         }}
       />
       <div className={styles.statusContainer}>
         <div className={styles.sensorData}>
-          Sensor Data: {sensorData}
-          {/* 졸음 상태인지 확인 */}
+          현재 상태 : {sensorData}
           {isDrowsy ? (
             <span className={styles.status}> 졸음 상태 감지!</span>
-          ) : (
-            <>
-              {isDrowsyByEAR && (
-                <span className={styles.status}>
-                  {" "}
-                  (눈 깜빡임 비율 감지! EAR)
-                </span>
-              )}
-              {isYawning && (
-                <span className={styles.status}> (하품 감지! MAR)</span>
-              )}
-              {isDrowsyByPERCLOS && (
-                <span className={styles.status}>
-                  (장시간 눈 감음 감지! PERCLOS)
-                </span>
-              )}
-              {isLongEyeClosureDetected && (
-                <span className={styles.status}>
-                  (장시간 눈 감음 감지! by EAR)
-                </span>
-              )}
-              {isDrowsyByServer && (
-                <span className={styles.status}>
-                  {" "}
-                  (서버에서 졸음 상태 감지!)
-                </span>
-              )}
-            </>
-          )}
+          ) : isYawning ? (
+            <span className={styles.status}> (하품 감지! MAR)</span>
+          ) : isLongEyeClosureDetected ? (
+            <span className={styles.status}>(장시간 눈 감음 감지! by EAR)</span>
+          ) : isDrowsyByServer ? (
+            <span className={styles.status}> (서버에서 졸음 상태 감지!)</span>
+          ) : null}
         </div>
       </div>
 
       <div className={styles.buttonContainer}>
+        <button className={styles.button} onClick={toggleCamera}>
+          {isCameraOn ? "카메라 끄기" : "카메라 켜기"}
+        </button>
         <button className={styles.button} onClick={() => handleButtonClick()}>
           아두이노 실행
         </button>
