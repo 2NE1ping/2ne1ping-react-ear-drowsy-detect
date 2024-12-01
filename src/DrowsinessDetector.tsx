@@ -3,6 +3,7 @@ import { FaceMesh } from "@mediapipe/face_mesh";
 import * as cam from "@mediapipe/camera_utils";
 import Header from "./Header";
 import axios from "axios";
+import styles from "./DrowsinessDetector.module.css";
 
 const DrowsinessDetector: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -252,7 +253,17 @@ const DrowsinessDetector: React.FC = () => {
 
         if (canvasRef.current) {
           const canvasCtx = canvasRef.current.getContext("2d");
+
           if (canvasCtx) {
+            // 캔버스 해상도 및 크기 조정
+            canvasRef.current.width = 1280;
+            canvasRef.current.height = 960;
+            canvasCtx.clearRect(
+              0,
+              0,
+              canvasRef.current.width,
+              canvasRef.current.height
+            );
             canvasCtx.clearRect(
               0,
               0,
@@ -274,7 +285,7 @@ const DrowsinessDetector: React.FC = () => {
                 canvasCtx.arc(
                   landmark.x * canvasRef.current!.width,
                   landmark.y * canvasRef.current!.height,
-                  2,
+                  5,
                   0,
                   2 * Math.PI
                 );
@@ -312,7 +323,7 @@ const DrowsinessDetector: React.FC = () => {
               canvasCtx.arc(
                 landmark.x * canvasRef.current!.width,
                 landmark.y * canvasRef.current!.height,
-                2,
+                5,
                 0,
                 2 * Math.PI
               );
@@ -443,96 +454,70 @@ const DrowsinessDetector: React.FC = () => {
   return (
     <>
       <Header />
-      <video ref={videoRef} autoPlay style={{ display: "none" }} />
-      <canvas ref={canvasRef} width={640} height={480} />
-      {isDrowsyByEAR && (
-        <div
-          style={{
-            color: "blue",
-            fontSize: "24px",
-            position: "absolute",
-            top: "10px",
-            right: "10px",
-          }}
-        >
-          눈 깜빡임 비율 감지! (EAR)
-        </div>
-      )}
-      {isYawning && (
-        <div
-          style={{
-            color: "orange",
-            fontSize: "24px",
-            position: "absolute",
-            top: "50px",
-            right: "10px",
-          }}
-        >
-          하품 감지! (MAR)
-        </div>
-      )}
-      {isDrowsyByPERCLOS && (
-        <div
-          style={{
-            color: "red",
-            fontSize: "24px",
-            position: "absolute",
-            top: "90px",
-            right: "10px",
-          }}
-        >
-          장시간 눈 감음 감지! (PERCLOS)
-        </div>
-      )}
-      {isLongEyeClosureDetected && (
-        <div
-          style={{
-            color: "red",
-            fontSize: "24px",
-            position: "absolute",
-            top: "130px",
-            right: "10px",
-          }}
-        >
-          장시간 눈 감음 감지! (by EAR)
-        </div>
-      )}
-      {isDrowsyByServer && (
-        <div
-          style={{
-            color: "red",
-            fontSize: "24px",
-            position: "absolute",
-            top: "170px",
-            right: "10px",
-          }}
-        >
-          서버에서 졸음 상태 감지!
-        </div>
-      )}
-
-      {/* 아두이노 연결 확인용 */}
-      <div
+      <video ref={videoRef} style={{ display: "none" }} />
+      <canvas
+        ref={canvasRef}
         style={{
-          color: "green",
-          fontSize: "24px",
-          position: "absolute",
-          top: "210px",
-          right: "10px",
+          display: "block",
+          width: "100%",
+          height: "140%",
         }}
-      >
-        Sensor Data: {sensorData}
+      />
+      <div className={styles.statusContainer}>
+        <div className={styles.sensorData}>
+          Sensor Data: {sensorData}
+          {/* 졸음 상태인지 확인 */}
+          {isDrowsy ? (
+            <span className={styles.status}> 졸음 상태 감지!</span>
+          ) : (
+            <>
+              {isDrowsyByEAR && (
+                <span className={styles.status}>
+                  {" "}
+                  (눈 깜빡임 비율 감지! EAR)
+                </span>
+              )}
+              {isYawning && (
+                <span className={styles.status}> (하품 감지! MAR)</span>
+              )}
+              {isDrowsyByPERCLOS && (
+                <span className={styles.status}>
+                  (장시간 눈 감음 감지! PERCLOS)
+                </span>
+              )}
+              {isLongEyeClosureDetected && (
+                <span className={styles.status}>
+                  (장시간 눈 감음 감지! by EAR)
+                </span>
+              )}
+              {isDrowsyByServer && (
+                <span className={styles.status}>
+                  {" "}
+                  (서버에서 졸음 상태 감지!)
+                </span>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
-      <button onClick={() => handleButtonClick()}>아두이노 실행</button>
-
-      {/* TODO: 음성 재생 쪽으로 이동*/}
-      <button onClick={() => handleButtonClick("camera")}>
-        영상에서 졸음 감지 시 노란색 LED 켜기
-      </button>
-      <button onClick={() => handleButtonClick("muse2")}>
-        MUSE2에서 졸음 감지 시 파란색 LED 켜기
-      </button>
+      <div className={styles.buttonContainer}>
+        <button className={styles.button} onClick={() => handleButtonClick()}>
+          아두이노 실행
+        </button>
+        <button
+          className={styles.button}
+          onClick={() => handleButtonClick("camera")}
+        >
+          영상에서 졸음 감지 시 노란색 LED 켜기
+        </button>
+        <button
+          className={styles.button}
+          onClick={() => handleButtonClick("muse2")}
+        >
+          MUSE2에서 졸음 감지 시 파란색 LED 켜기
+        </button>
+      </div>
     </>
   );
 };
