@@ -38,6 +38,29 @@ const DrowsinessDetector: React.FC = () => {
     console.log("isDrowsy:", isDrowsy);
   }, [isDrowsy]);
 
+  // 상태 메시지를 일정 시간 동안 유지하기 위한 useEffect
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    if (isDrowsy || isYawning || isLongEyeClosureDetected || isDrowsyByServer) {
+      timeout = setTimeout(() => {
+        setIsDrowsy(false);
+        setIsYawning(false);
+        setIsLongEyeClosureDetected(false);
+        setIsDrowsyByServer(false);
+      }, 10000); // 10초 동안 상태 메시지 유지
+    }
+    return () => clearTimeout(timeout);
+  }, [isDrowsy, isYawning, isLongEyeClosureDetected, isDrowsyByServer]);
+
+  useEffect(() => {
+    if (sensorData) {
+      const timeout = setTimeout(() => {
+        setSensorData(""); // 일정 시간이 지나면 sensorData를 초기화
+      }, 10000); // 10초 동안 sensorData 유지
+      return () => clearTimeout(timeout);
+    }
+  }, [sensorData]);
+
   useEffect(() => {
     const ws = new WebSocket("ws://localhost:8080");
 
