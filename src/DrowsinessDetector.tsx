@@ -178,6 +178,8 @@ const DrowsinessDetector: React.FC = () => {
     }
   };
 
+  let lastButtonClick = ""; // Store the last button click value
+
   // 졸음 상태에 따른 알람 재생
   useEffect(() => {
     if (isDrowsyByEAR) {
@@ -185,12 +187,21 @@ const DrowsinessDetector: React.FC = () => {
     } else if (isYawning) {
       console.log("하품 상태 감지");
       playAlarm("yawn");
+      if (lastButtonClick !== "yawn") {
+        lastButtonClick = "yawn";
+      }
     } else if (isLongEyeClosureDetected) {
       console.log("장시간 눈 감음 감지");
       playAlarm("longEyeClosure");
+      if (lastButtonClick !== "longEyeClosure") {
+        lastButtonClick = "longEyeClosure"; // Update the last value
+      }
     } else if (isDrowsyByServer) {
       console.log("서버에서 졸음 감지");
       playAlarm("serverDrowsy");
+      if (lastButtonClick !== "serverDrowsy") {
+        lastButtonClick = "serverDrowsy"; // Update the last value
+      }
     }
   }, [isDrowsyByEAR, isYawning, isLongEyeClosureDetected, isDrowsyByServer]);
 
@@ -220,7 +231,9 @@ const DrowsinessDetector: React.FC = () => {
           console.log("서버로부터 졸음 상태 감지:", response.data);
           setIsDrowsyByServer(true);
           playAlarm("서버에서 졸음 상태 감지"); // 졸음 상태에서 알람 소리 재생
-
+          if (lastButtonClick !== "muse2") {
+            lastButtonClick = "muse2"; // Update the last value
+          }
           handleButtonClick("muse2");
         } else {
           setIsDrowsyByServer(false); // 졸음 상태가 아니라면 상태 초기화
@@ -230,7 +243,7 @@ const DrowsinessDetector: React.FC = () => {
       }
     };
 
-    const interval = setInterval(fetchDrowsyStatus, 10000); // 5초마다 요청
+    const interval = setInterval(fetchDrowsyStatus, 10000); // 10초마다 요청
     return () => clearInterval(interval); // 컴포넌트 언마운트 시 인터벌 클리어
   }, []);
 
