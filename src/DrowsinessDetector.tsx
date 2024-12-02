@@ -4,8 +4,16 @@ import * as cam from "@mediapipe/camera_utils";
 import Header from "./Header";
 import axios from "axios";
 import styles from "./DrowsinessDetector.module.css";
+import { useNavigate } from "react-router-dom";
 
 const DrowsinessDetector: React.FC = () => {
+  const navigate = useNavigate();
+
+  const resetToInitialState = () => {
+    // 루트 경로로 이동
+    navigate("/");
+  };
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -222,7 +230,7 @@ const DrowsinessDetector: React.FC = () => {
       }
     };
 
-    const interval = setInterval(fetchDrowsyStatus, 5000); // 5초마다 요청
+    const interval = setInterval(fetchDrowsyStatus, 10000); // 5초마다 요청
     return () => clearInterval(interval); // 컴포넌트 언마운트 시 인터벌 클리어
   }, []);
 
@@ -572,7 +580,7 @@ const DrowsinessDetector: React.FC = () => {
           ) : isYawning ? (
             <span className={styles.status}> 하품 감지! MAR</span>
           ) : isLongEyeClosureDetected ? (
-            <span className={styles.status}>장시간 눈 감음 감지! by EAR</span>
+            <span className={styles.status}>장시간 눈 감음 감지!</span>
           ) : isDrowsyByServer ? (
             <span className={styles.status}> 서버에서 졸음 상태 감지!</span>
           ) : null}
@@ -583,7 +591,10 @@ const DrowsinessDetector: React.FC = () => {
         <button className={styles.button} onClick={toggleCamera}>
           {isCameraOn ? "카메라 끄기" : "카메라 켜기"}
         </button>
-        <button className={styles.button} onClick={() => handleButtonClick()}>
+        <button className={styles.button} onClick={resetToInitialState}>
+          초기 화면으로 돌아가기
+        </button>
+        {/* <button className={styles.button} onClick={() => handleButtonClick()}>
           아두이노 실행
         </button>
         <button
@@ -597,7 +608,7 @@ const DrowsinessDetector: React.FC = () => {
           onClick={() => handleButtonClick("muse2")}
         >
           MUSE2에서 졸음 감지 시 파란색 LED 켜기
-        </button>
+        </button> */}
       </div>
     </>
   );
