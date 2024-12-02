@@ -230,7 +230,7 @@ const DrowsinessDetector: React.FC = () => {
       }
     };
 
-    const interval = setInterval(fetchDrowsyStatus, 5000); // 5초마다 요청
+    const interval = setInterval(fetchDrowsyStatus, 10000); // 5초마다 요청
     return () => clearInterval(interval); // 컴포넌트 언마운트 시 인터벌 클리어
   }, []);
 
