@@ -580,7 +580,7 @@ const DrowsinessDetector: React.FC = () => {
           ) : isYawning ? (
             <span className={styles.status}> 하품 감지! MAR</span>
           ) : isLongEyeClosureDetected ? (
-            <span className={styles.status}>장시간 눈 감음 감지! by EAR</span>
+            <span className={styles.status}>장시간 눈 감음 감지!</span>
           ) : isDrowsyByServer ? (
             <span className={styles.status}> 서버에서 졸음 상태 감지!</span>
           ) : null}
