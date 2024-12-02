@@ -4,8 +4,16 @@ import * as cam from "@mediapipe/camera_utils";
 import Header from "./Header";
 import axios from "axios";
 import styles from "./DrowsinessDetector.module.css";
+import { useNavigate } from "react-router-dom";
 
 const DrowsinessDetector: React.FC = () => {
+  const navigate = useNavigate();
+
+  const resetToInitialState = () => {
+    // 루트 경로로 이동
+    navigate("/");
+  };
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -583,7 +591,10 @@ const DrowsinessDetector: React.FC = () => {
         <button className={styles.button} onClick={toggleCamera}>
           {isCameraOn ? "카메라 끄기" : "카메라 켜기"}
         </button>
-        <button className={styles.button} onClick={() => handleButtonClick()}>
+        <button className={styles.button} onClick={resetToInitialState}>
+          초기 화면으로 돌아가기
+        </button>
+        {/* <button className={styles.button} onClick={() => handleButtonClick()}>
           아두이노 실행
         </button>
         <button
@@ -597,7 +608,7 @@ const DrowsinessDetector: React.FC = () => {
           onClick={() => handleButtonClick("muse2")}
         >
           MUSE2에서 졸음 감지 시 파란색 LED 켜기
-        </button>
+        </button> */}
       </div>
     </>
   );
