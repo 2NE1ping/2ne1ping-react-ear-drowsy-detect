@@ -36,6 +36,7 @@ const DrowsinessDetector: React.FC = () => {
   const [isLongEyeClosureDetected, setIsLongEyeClosureDetected] =
     useState(false);
   const [isDrowsyByServer, setIsDrowsyByServer] = useState(false);
+  const [isDrowsyByCamera, setIsDrowsyByCamera] = useState(false);
   const [sensorData, setSensorData] = useState<string>("");
 
   useState(false);
@@ -65,7 +66,7 @@ const DrowsinessDetector: React.FC = () => {
         setIsYawning(false);
         setIsLongEyeClosureDetected(false);
         setIsDrowsyByServer(false);
-      }, 10000); // 10초 동안 상태 메시지 유지
+      }, 5000); // 5초 동안 상태 메시지 유지
     }
     return () => clearTimeout(timeout);
   }, [isDrowsy, isYawning, isLongEyeClosureDetected, isDrowsyByServer]);
@@ -138,6 +139,8 @@ const DrowsinessDetector: React.FC = () => {
     }
   };
 
+  // TODO: 중복 코드 제거 필요 (1208 작성)
+
   // 알람을 상황에 따라 다르게 지정하는 함수
   const playAlarm = (reason: string) => {
     if (!isPlayingRef.current) {
@@ -183,24 +186,24 @@ const DrowsinessDetector: React.FC = () => {
   // 졸음 상태에 따른 알람 재생
   useEffect(() => {
     if (isDrowsyByEAR) {
-      console.log("EAR 상태: 졸음 감지");
+      console.log("눈 깜빡임 감지");
     } else if (isYawning) {
       console.log("하품 상태 감지");
-      playAlarm("yawn");
+      // playAlarm("yawn");
       if (lastButtonClick !== "yawn") {
         lastButtonClick = "yawn";
       }
-    } else if (isLongEyeClosureDetected) {
+    } else if (isLongEyeClosureDetected || isDrowsyByPERCLOS) {
       console.log("장시간 눈 감음 감지");
       playAlarm("longEyeClosure");
       if (lastButtonClick !== "longEyeClosure") {
-        lastButtonClick = "longEyeClosure"; // Update the last value
+        lastButtonClick = "longEyeClosure";
       }
     } else if (isDrowsyByServer) {
       console.log("서버에서 졸음 감지");
       playAlarm("serverDrowsy");
       if (lastButtonClick !== "serverDrowsy") {
-        lastButtonClick = "serverDrowsy"; // Update the last value
+        lastButtonClick = "serverDrowsy";
       }
     }
   }, [isDrowsyByEAR, isYawning, isLongEyeClosureDetected, isDrowsyByServer]);
@@ -224,15 +227,12 @@ const DrowsinessDetector: React.FC = () => {
     const fetchDrowsyStatus = async () => {
       try {
         const response = await axios.get("/consume");
-        if (
-          response.data.status === "drowsy" &&
-          response.data.data.drowsy === "1"
-        ) {
+        if (response.data.data.drowsy === "1") {
           console.log("서버로부터 졸음 상태 감지:", response.data);
           setIsDrowsyByServer(true);
-          playAlarm("서버에서 졸음 상태 감지"); // 졸음 상태에서 알람 소리 재생
+          playAlarm("serverDrowsy"); // 졸음 상태에서 알람 소리 재생
           if (lastButtonClick !== "muse2") {
-            lastButtonClick = "muse2"; // Update the last value
+            lastButtonClick = "muse2";
           }
           handleButtonClick("muse2");
         } else {
@@ -316,9 +316,9 @@ const DrowsinessDetector: React.FC = () => {
     }
 
     const EAR_THRESHOLD = 0.2;
-    const EAR_CONSEC_FRAMES = 15;
+    const EAR_CONSEC_FRAMES = 30;
     const MAR_THRESHOLD = 0.5;
-    const YAWN_CONSEC_FRAMES = 15;
+    const YAWN_CONSEC_FRAMES = 30;
     const DROWSINESS_ALERT_INTERVAL = 10 * 1000;
     const PERCLOS_WINDOW = 4 * 1000;
     const PERCLOS_THRESHOLD = 0.7;
@@ -490,16 +490,18 @@ const DrowsinessDetector: React.FC = () => {
           // console.log("PERCLOS:", perclos);
           if (perclos > PERCLOS_THRESHOLD) {
             setIsDrowsyByPERCLOS(true);
+            setIsDrowsyByCamera(true);
             // alert("졸음이 감지되었습니다! 잠시 휴식을 취하세요. by PERCLOS");
             console.log(
               "졸음이 감지되었습니다! 잠시 휴식을 취하세요. by PERCLOS"
             );
-            playAlarm("PERCLOS에 의한 졸음 상태 감지"); // 졸음 상태에서 알람 소리 재생
+            playAlarm("longEyeClosure"); // 졸음 상태에서 알람 소리 재생
 
             handleButtonClick("camera");
             lastAlertTime = currentTime;
           } else {
             setIsDrowsyByPERCLOS(false);
+            // setIsDrowsyByCamera(false);
           }
           // PERCLOS 계산 초기화
           perclosStartTime = currentTime;
@@ -540,10 +542,12 @@ const DrowsinessDetector: React.FC = () => {
           console.log(
             "졸음이 감지되었습니다! 잠시 휴식을 취하세요. by EAR and yawn"
           );
-          playAlarm("EAR 또는 하품 의한 졸음 상태 감지"); // 졸음 상태에서 알람 소리 재생
+          setIsDrowsyByCamera(true);
+          playAlarm("drowsy"); // 졸음 상태에서 알람 소리 재생
           handleButtonClick("camera");
           lastAlertTime = currentTime;
         } else {
+          // setIsDrowsyByCamera(false);
         }
         updateBlinkStatus(averageEAR);
       }
@@ -569,6 +573,19 @@ const DrowsinessDetector: React.FC = () => {
     }
   }, [isCameraOn]);
 
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+
+    if (isDrowsyByCamera) {
+      playAlarm("drowsy");
+      timeout = setTimeout(() => {
+        setIsDrowsyByCamera(false); // 일정 시간 후 상태 초기화
+      }, 7000); // 10초 후 초기화
+    }
+
+    return () => clearTimeout(timeout); // 컴포넌트 언마운트 시 타이머 클리어
+  }, [isDrowsyByCamera]);
+
   const toggleCamera = () => {
     setIsCameraOn((prev) => !prev);
   };
@@ -585,20 +602,26 @@ const DrowsinessDetector: React.FC = () => {
           height: "100%",
         }}
       />
+
       <div className={styles.statusContainer}>
-        <div className={styles.sensorData}>
-          현재 상태 : {sensorData}
-          {isDrowsy ? (
-            <span className={styles.status}> 졸음 상태 감지!</span>
-          ) : isYawning ? (
-            <span className={styles.status}> 하품 감지! MAR</span>
-          ) : isLongEyeClosureDetected ? (
-            <span className={styles.status}>장시간 눈 감음 감지!</span>
-          ) : isDrowsyByServer ? (
-            <span className={styles.status}> 서버에서 졸음 상태 감지!</span>
-          ) : null}
-        </div>
+        현재 상태 :
+        {isDrowsyByCamera ? (
+          <span className={styles.status}> 졸음 상태 감지!</span>
+        ) : null}
       </div>
+      <div className={styles.statusContainer}>
+        감지 상태 :
+        {isDrowsyByEAR ? (
+          <span className={styles.status}> 눈 깜빡임 감지!</span>
+        ) : isYawning ? (
+          <span className={styles.status}> 하품 감지!</span>
+        ) : isLongEyeClosureDetected ? (
+          <span className={styles.status}>장시간 눈 감음 감지!</span>
+        ) : isDrowsyByServer ? (
+          <span className={styles.status}> 서버에서 졸음 상태 감지!</span>
+        ) : null}
+      </div>
+      <div className={styles.sensorData}>이산화탄소 농도 : {sensorData}</div>
 
       <div className={styles.buttonContainer}>
         <button className={styles.button} onClick={toggleCamera}>
